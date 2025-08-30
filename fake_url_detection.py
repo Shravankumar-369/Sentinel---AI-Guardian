@@ -20,7 +20,7 @@ def check_whois(url):
 
 # ---------------- GOOGLE SAFE BROWSING ----------------
 def check_google_safe(url):
-    api_key = st.secrets["GOOGLE_SAFE_BROWSING_API_KEY"]
+    api_key = st.secrets["GSB_API_KEY"]
     endpoint = f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={api_key}"
     payload = {
         "client": {"clientId": "sentinel", "clientVersion": "1.0"},

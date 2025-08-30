@@ -1,13 +1,15 @@
+# fake_url_detection.py
+
 import whois
 import requests
+from openai import OpenAI
 import streamlit as st
-import openai
 
-# Configure GPT-5
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+# ---------------- CONFIG ----------------
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 # ---------------- WHOIS CHECK ----------------
-def check_whois(url):
+def check_whois(url: str) -> dict:
     try:
         domain_info = whois.whois(url)
         return {
@@ -19,13 +21,14 @@ def check_whois(url):
         return {"error": f"WHOIS lookup failed: {str(e)}"}
 
 # ---------------- GOOGLE SAFE BROWSING ----------------
-def check_google_safe(url):
+def check_google_safe(url: str) -> dict:
     api_key = st.secrets["GSB_API_KEY"]
     endpoint = f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={api_key}"
     payload = {
         "client": {"clientId": "sentinel", "clientVersion": "1.0"},
         "threatInfo": {
-            "threatTypes": ["MALWARE", "SOCIAL_ENGINEERING", "POTENTIALLY_HARMFUL_APPLICATION", "UNWANTED_SOFTWARE"],
+            "threatTypes": ["MALWARE", "SOCIAL_ENGINEERING", 
+                            "POTENTIALLY_HARMFUL_APPLICATION", "UNWANTED_SOFTWARE"],
             "platformTypes": ["ANY_PLATFORM"],
             "threatEntryTypes": ["URL"],
             "threatEntries": [{"url": url}],
@@ -42,7 +45,7 @@ def check_google_safe(url):
         return {"status": "error", "details": str(e)}
 
 # ---------------- GPT-5 VERDICT ----------------
-def ai_verdict_gpt(url, whois_data, safe_data):
+def ai_verdict_gpt(url: str, whois_data: dict, safe_data: dict) -> str:
     prompt = f"""
 You are an AI cybersecurity assistant.
 
@@ -56,15 +59,19 @@ Return only:
 - Final Verdict: Safe ✅ / Suspicious ⚠️ / Phishing ❌
 - Short suggestion for the user (1-2 sentences)
 """
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-5",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.0,
     )
-    return response['choices'][0]['message']['content'].strip()
+    return response.choices[0].message.content.strip()
 
-# ---------------- MAIN FUNCTION ----------------
-def phishing_detector(url):
+# ---------------- MAIN DETECTOR ----------------
+def phishing_detector(url: str) -> str:
+    """
+    Input: URL string
+    Output: GPT-5 verdict + suggestion
+    """
     whois_data = check_whois(url)
     safe_data = check_google_safe(url)
     verdict = ai_verdict_gpt(url, whois_data, safe_data)

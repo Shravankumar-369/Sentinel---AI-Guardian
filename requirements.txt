@@ -9,3 +9,4 @@ webdriver-manager
 google-generativeai
 whois
 googlesearch
+pip install --upgrade pip

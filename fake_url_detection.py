@@ -5,6 +5,10 @@ import requests
 from openai import OpenAI
 import streamlit as st
 
+import os
+os.environ["HTTPS_PROXY"] = "http://your_proxy:port"
+os.environ["HTTP_PROXY"] = "http://your_proxy:port"
+
 # ---------------- CONFIG ----------------
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 

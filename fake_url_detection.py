@@ -1,11 +1,10 @@
 import whois
 import requests
-import google.generativeai as genai
 import streamlit as st
+import openai
 
-# Configure Gemini AI
-genai.configure(api_key=st.secrets["API_KEY"])
-model = genai.GenerativeModel("gemini-1.5-flash")
+# Configure GPT-5
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 # ---------------- WHOIS CHECK ----------------
 def check_whois(url):
@@ -17,54 +16,56 @@ def check_whois(url):
             "expiration_date": str(domain_info.expiration_date),
         }
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"WHOIS lookup failed: {str(e)}"}
 
-# ---------------- VIRUSTOTAL CHECK ----------------
-def check_virustotal(url):
-    api_key = st.secrets["VIRUSTOTAL_API_KEY"]
-    headers = {"x-apikey": api_key}
-    vt_url = f"https://www.virustotal.com/api/v3/urls"
-    
-    # Encode URL as required by VT API
-    import base64
-    url_id = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
-    
+# ---------------- GOOGLE SAFE BROWSING ----------------
+def check_google_safe(url):
+    api_key = st.secrets["GOOGLE_SAFE_BROWSING_API_KEY"]
+    endpoint = f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={api_key}"
+    payload = {
+        "client": {"clientId": "sentinel", "clientVersion": "1.0"},
+        "threatInfo": {
+            "threatTypes": ["MALWARE", "SOCIAL_ENGINEERING", "POTENTIALLY_HARMFUL_APPLICATION", "UNWANTED_SOFTWARE"],
+            "platformTypes": ["ANY_PLATFORM"],
+            "threatEntryTypes": ["URL"],
+            "threatEntries": [{"url": url}],
+        },
+    }
     try:
-        response = requests.get(f"{vt_url}/{url_id}", headers=headers, timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            stats = data.get("data", {}).get("attributes", {}).get("last_analysis_stats", {})
-            return stats  # Contains harmless, malicious, suspicious counts
+        res = requests.post(endpoint, json=payload, timeout=10)
+        data = res.json()
+        if "matches" in data:
+            return {"status": "malicious", "details": data["matches"]}
         else:
-            return {"error": f"VirusTotal response: {response.status_code}"}
+            return {"status": "safe"}
     except Exception as e:
-        return {"error": str(e)}
+        return {"status": "error", "details": str(e)}
 
-# ---------------- AI VERDICT ----------------
-def ai_verdict(url, whois_data, vt_data):
+# ---------------- GPT-5 VERDICT ----------------
+def ai_verdict_gpt(url, whois_data, safe_data):
     prompt = f"""
-Analyze this website for phishing risk:
+You are an AI cybersecurity assistant.
+
+Analyze the following URL and determine if it is safe, suspicious, or phishing.
 
 URL: {url}
 WHOIS Info: {whois_data}
-VirusTotal Data: {vt_data}
+Google Safe Browsing: {safe_data}
 
-Return the final verdict as one of:
-- Safe ✅
-- Suspicious ⚠️
-- Phishing ❌
-
-Also provide a short suggestion for the user.
+Return only:
+- Final Verdict: Safe ✅ / Suspicious ⚠️ / Phishing ❌
+- Short suggestion for the user (1-2 sentences)
 """
-    try:
-        response = model.generate_content(prompt)
-        return response.text.strip()
-    except Exception as e:
-        return f"AI analysis failed: {str(e)}"
+    response = openai.ChatCompletion.create(
+        model="gpt-5",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.0,
+    )
+    return response['choices'][0]['message']['content'].strip()
 
 # ---------------- MAIN FUNCTION ----------------
 def phishing_detector(url):
     whois_data = check_whois(url)
-    vt_data = check_virustotal(url)
-    verdict = ai_verdict(url, whois_data, vt_data)
+    safe_data = check_google_safe(url)
+    verdict = ai_verdict_gpt(url, whois_data, safe_data)
     return verdict

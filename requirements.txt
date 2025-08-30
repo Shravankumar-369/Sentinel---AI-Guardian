@@ -1,1 +1,10 @@
-
+streamlit
+streamlit-option-menu
+streamlit-lottie
+pillow
+requests
+beautifulsoup4
+selenium
+webdriver-manager
+google-generativeai
+whois

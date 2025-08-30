@@ -1,13 +1,9 @@
 # fake_url_detection.py
 
 import whois
-import requests
-from openai import OpenAI
 import streamlit as st
-
-import os
-os.environ["HTTPS_PROXY"] = "http://your_proxy:port"
-os.environ["HTTP_PROXY"] = "http://your_proxy:port"
+from openai import OpenAI
+from playwright.sync_api import sync_playwright
 
 # ---------------- CONFIG ----------------
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -24,32 +20,32 @@ def check_whois(url: str) -> dict:
     except Exception as e:
         return {"error": f"WHOIS lookup failed: {str(e)}"}
 
-# ---------------- GOOGLE SAFE BROWSING ----------------
-def check_google_safe(url: str) -> dict:
-    api_key = st.secrets["GSB_API_KEY"]
-    endpoint = f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={api_key}"
-    payload = {
-        "client": {"clientId": "sentinel", "clientVersion": "1.0"},
-        "threatInfo": {
-            "threatTypes": ["MALWARE", "SOCIAL_ENGINEERING", 
-                            "POTENTIALLY_HARMFUL_APPLICATION", "UNWANTED_SOFTWARE"],
-            "platformTypes": ["ANY_PLATFORM"],
-            "threatEntryTypes": ["URL"],
-            "threatEntries": [{"url": url}],
-        },
-    }
+# ---------------- PLAYWRIGHT PAGE ANALYSIS ----------------
+def analyze_page_playwright(url: str) -> dict:
+    """
+    Opens the page headlessly using Playwright and checks if it has login/password fields.
+    Returns a simple dict for AI input.
+    """
+    data = {"title": None, "has_login": False, "error": None}
     try:
-        res = requests.post(endpoint, json=payload, timeout=10)
-        data = res.json()
-        if "matches" in data:
-            return {"status": "malicious", "details": data["matches"]}
-        else:
-            return {"status": "safe"}
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(url, timeout=10000)
+            data["title"] = page.title()
+            html = page.content().lower()
+            if "password" in html or "login" in html:
+                data["has_login"] = True
+            browser.close()
     except Exception as e:
-        return {"status": "error", "details": str(e)}
+        data["error"] = str(e)
+    return data
 
 # ---------------- GPT-5 VERDICT ----------------
-def ai_verdict_gpt(url: str, whois_data: dict, safe_data: dict) -> str:
+def ai_verdict_gpt(url: str, whois_data: dict, page_data: dict) -> str:
+    """
+    Uses GPT-5 to give a final verdict + short suggestions based on WHOIS and page info.
+    """
     prompt = f"""
 You are an AI cybersecurity assistant.
 
@@ -57,7 +53,7 @@ Analyze the following URL and determine if it is safe, suspicious, or phishing.
 
 URL: {url}
 WHOIS Info: {whois_data}
-Google Safe Browsing: {safe_data}
+Page Analysis: {page_data}
 
 Return only:
 - Final Verdict: Safe ✅ / Suspicious ⚠️ / Phishing ❌
@@ -77,6 +73,6 @@ def phishing_detector(url: str) -> str:
     Output: GPT-5 verdict + suggestion
     """
     whois_data = check_whois(url)
-    safe_data = check_google_safe(url)
-    verdict = ai_verdict_gpt(url, whois_data, safe_data)
+    page_data = analyze_page_playwright(url)
+    verdict = ai_verdict_gpt(url, whois_data, page_data)
     return verdict

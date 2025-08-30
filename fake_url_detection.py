@@ -75,5 +75,5 @@ def phishing_detector(url: str) -> str:
     """
     whois_data = check_whois(url)
     page_data = analyze_page_playwright(url)
-    verdict = phishing_detector(url)
+    verdict = gemini_verdict(url, whois_data, page_data)
     return verdict

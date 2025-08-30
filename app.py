@@ -63,7 +63,7 @@ if selected == "Home":
 
     # Hero Image
     hero_image = Image.open("assets/logo3.jpg")
-    st.image(hero_image, use_column_width=True)
+    st.image(hero_image, use_container_width=True)
 
     # Lottie Animation
 

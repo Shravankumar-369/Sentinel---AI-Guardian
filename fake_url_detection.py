@@ -1,4 +1,4 @@
-
+import streamlit as st
 import whois
 import google.generativeai as genai
 from selenium import webdriver
@@ -6,7 +6,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
-GEMINI_API_KEY = "ENTERYOURAPIKEY"
+GEMINI_API_KEY = st.secrets["API_KEY"]
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel("gemini-1.5-flash")
 

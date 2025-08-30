@@ -7,7 +7,7 @@ import google.generativeai as genai
 
 # ---------------- CONFIG ----------------
 # Make sure you store your GEMINI API key in Streamlit Secrets
-# st.secrets["GEMINI_API_KEY"]
+# st.secrets["API_KEY"]
 genai.configure(api_key=st.secrets["API_KEY"])
 model = genai.GenerativeModel("gemini-1.5-flash")
 

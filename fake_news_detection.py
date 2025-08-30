@@ -4,7 +4,7 @@ from googlesearch import search
 import requests
 from bs4 import BeautifulSoup
 
-GEMINI_API_KEY = "enteryourapikey"
+GEMINI_API_KEY = "ENTERYOURAPIKEY"
 genai.configure(api_key=GEMINI_API_KEY)
 
 def fetch_related_articles(query, num_results=5):

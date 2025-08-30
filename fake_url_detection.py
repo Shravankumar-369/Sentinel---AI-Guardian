@@ -1,48 +1,14 @@
 import whois
-import streamlit as st
-import google.generativeai as genai
 import requests
-from bs4 import BeautifulSoup
+import google.generativeai as genai
+import streamlit as st
 
-# 🔑 Secure API key from Streamlit secrets
-GEMINI_API_KEY = st.secrets["API_KEY"]
-genai.configure(api_key=GEMINI_API_KEY)
+# Configure Gemini AI
+genai.configure(api_key=st.secrets["API_KEY"])
 model = genai.GenerativeModel("gemini-1.5-flash")
 
-
-def get_page_details(url):
-    """
-    Fetch basic webpage info using requests + BeautifulSoup.
-    Detects title and whether login fields are present.
-    """
-    page_data = {"title": None, "has_login": False, "error": None}
-    headers = {"User-Agent": "Mozilla/5.0"}
-
-    try:
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-
-        soup = BeautifulSoup(response.text, "html.parser")
-
-        # Extract title
-        if soup.title:
-            page_data["title"] = soup.title.string.strip()
-
-        # Look for login/password fields
-        html = response.text.lower()
-        if "password" in html or "login" in html:
-            page_data["has_login"] = True
-
-    except Exception as e:
-        page_data["error"] = f"Could not load page: {str(e)}"
-
-    return page_data
-
-
+# ---------------- WHOIS CHECK ----------------
 def check_whois(url):
-    """
-    Perform WHOIS lookup for domain info
-    """
     try:
         domain_info = whois.whois(url)
         return {
@@ -51,42 +17,54 @@ def check_whois(url):
             "expiration_date": str(domain_info.expiration_date),
         }
     except Exception as e:
-        return {"error": f"WHOIS lookup failed: {str(e)}"}
+        return {"error": str(e)}
 
+# ---------------- VIRUSTOTAL CHECK ----------------
+def check_virustotal(url):
+    api_key = st.secrets["VIRUSTOTAL_API_KEY"]
+    headers = {"x-apikey": api_key}
+    vt_url = f"https://www.virustotal.com/api/v3/urls"
+    
+    # Encode URL as required by VT API
+    import base64
+    url_id = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
+    
+    try:
+        response = requests.get(f"{vt_url}/{url_id}", headers=headers, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            stats = data.get("data", {}).get("attributes", {}).get("last_analysis_stats", {})
+            return stats  # Contains harmless, malicious, suspicious counts
+        else:
+            return {"error": f"VirusTotal response: {response.status_code}"}
+    except Exception as e:
+        return {"error": str(e)}
 
-def gemini_verdict(url, page_data, whois_data):
-    """
-    Use Gemini AI to analyze phishing risk
-    """
+# ---------------- AI VERDICT ----------------
+def ai_verdict(url, whois_data, vt_data):
     prompt = f"""
-    Analyze this website for phishing risk:
+Analyze this website for phishing risk:
 
-    URL: {url}
-    Page Title: {page_data.get('title')}
-    Login Field Present: {page_data.get('has_login')}
-    Page Error: {page_data.get('error')}
+URL: {url}
+WHOIS Info: {whois_data}
+VirusTotal Data: {vt_data}
 
-    WHOIS Info: {whois_data}
+Return the final verdict as one of:
+- Safe ✅
+- Suspicious ⚠️
+- Phishing ❌
 
-    Return verdict:
-    - Safe ✅
-    - Suspicious ⚠
-    - Phishing ❌
-    """
-
+Also provide a short suggestion for the user.
+"""
     try:
         response = model.generate_content(prompt)
         return response.text.strip()
     except Exception as e:
         return f"AI analysis failed: {str(e)}"
 
-
+# ---------------- MAIN FUNCTION ----------------
 def phishing_detector(url):
-    """
-    Full pipeline: fetch page details, WHOIS info, AI verdict
-    """
-    page_data = get_page_details(url)
     whois_data = check_whois(url)
-    verdict = gemini_verdict(url, page_data, whois_data)
-
-    return page_data, whois_data, verdict
+    vt_data = check_virustotal(url)
+    verdict = ai_verdict(url, whois_data, vt_data)
+    return verdict

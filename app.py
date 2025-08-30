@@ -66,17 +66,20 @@ if selected == "Home":
     st.image(hero_image, use_column_width=True)
 
     # Lottie Animation
-    lottie_ai = load_local_lottie("assets/lottie/news.json")
-    if lottie_ai:
-        st_lottie(lottie_ai, height=300)
-    else:
-        st.write("🎬 Animation not available")
+
 
 # ===============================
 # Fake News Detection Page
 # ===============================
 elif selected == "Fake News Detection":
     st.header("📰 Fake News Detection")
+
+    lottie_ai = load_local_lottie("assets/lottie/news.json")
+    if lottie_ai:
+        st_lottie(lottie_ai, height=300)
+    else:
+        st.write("🎬 Animation not available")
+
     user_news = st.text_area("Enter a news headline or claim:")
 
     if st.button("Check News"):
@@ -119,6 +122,13 @@ elif selected == "Fake News Detection":
 # ===============================
 elif selected == "Phishing URL Detection":
     st.header("🔗 Phishing URL Detection")
+
+    lottie_ai = load_local_lottie("assets/lottie/phishing.json")
+    if lottie_ai:
+        st_lottie(lottie_ai, height=300)
+    else:
+        st.write("🎬 Animation not available")
+
     url_input = st.text_input("Enter a URL:")
 
     if st.button("Check URL"):
@@ -169,4 +179,3 @@ else:
     """)
     image = Image.open("assets/hero_image2.jpg")
     st.image(image, width=200)
-

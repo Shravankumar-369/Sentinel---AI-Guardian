@@ -9,4 +9,4 @@ webdriver-manager
 google-generativeai
 whois
 googlesearch-python
-openai
+openai migrate

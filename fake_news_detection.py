@@ -1,10 +1,10 @@
-
+import streamlit as st
 import google.generativeai as genai
 from googlesearch import search
 import requests
 from bs4 import BeautifulSoup
 
-GEMINI_API_KEY = "ENTERYOURAPIKEY"
+GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=GEMINI_API_KEY)
 
 def fetch_related_articles(query, num_results=5):

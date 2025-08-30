@@ -2,11 +2,14 @@
 
 import whois
 import streamlit as st
-from openai import OpenAI
 from playwright.sync_api import sync_playwright
+import google.generativeai as genai
 
 # ---------------- CONFIG ----------------
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+# Make sure you store your GEMINI API key in Streamlit Secrets
+# st.secrets["GEMINI_API_KEY"]
+genai.configure(api_key=st.secrets["API_KEY"])
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 # ---------------- WHOIS CHECK ----------------
 def check_whois(url: str) -> dict:
@@ -23,8 +26,8 @@ def check_whois(url: str) -> dict:
 # ---------------- PLAYWRIGHT PAGE ANALYSIS ----------------
 def analyze_page_playwright(url: str) -> dict:
     """
-    Opens the page headlessly using Playwright and checks if it has login/password fields.
-    Returns a simple dict for AI input.
+    Headlessly opens the page using Playwright.
+    Checks for login/password fields.
     """
     data = {"title": None, "has_login": False, "error": None}
     try:
@@ -41,10 +44,10 @@ def analyze_page_playwright(url: str) -> dict:
         data["error"] = str(e)
     return data
 
-# ---------------- GPT-5 VERDICT ----------------
-def ai_verdict_gpt(url: str, whois_data: dict, page_data: dict) -> str:
+# ---------------- GEMINI AI VERDICT ----------------
+def gemini_verdict(url: str, whois_data: dict, page_data: dict) -> str:
     """
-    Uses GPT-5 to give a final verdict + short suggestions based on WHOIS and page info.
+    Uses Gemini AI to give final verdict + suggestions
     """
     prompt = f"""
 You are an AI cybersecurity assistant.
@@ -59,20 +62,18 @@ Return only:
 - Final Verdict: Safe ✅ / Suspicious ⚠️ / Phishing ❌
 - Short suggestion for the user (1-2 sentences)
 """
-    response = client.chat.completions.create(
-        model="gpt-5",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.0,
-    )
-    return response.choices[0].message.content.strip()
+    try:
+        response = model.generate_content(prompt)
+        return response.text.strip()
+    except Exception as e:
+        return f"AI analysis failed: {str(e)}"
 
 # ---------------- MAIN DETECTOR ----------------
 def phishing_detector(url: str) -> str:
     """
-    Input: URL string
-    Output: GPT-5 verdict + suggestion
+    Returns Gemini verdict only
     """
     whois_data = check_whois(url)
     page_data = analyze_page_playwright(url)
-    verdict = ai_verdict_gpt(url, whois_data, page_data)
+    verdict = gemini_verdict(url, whois_data, page_data)
     return verdict

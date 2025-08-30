@@ -10,3 +10,4 @@ google-generativeai
 whois
 googlesearch-python
 openai==1.7.0
+os

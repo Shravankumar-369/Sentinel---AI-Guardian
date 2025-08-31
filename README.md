@@ -70,7 +70,7 @@ For Web Interface
 -streamlit
 
 
-https://sentinel-your-ai-guardian-against-fake-news-phishing-k9uf2utqn.streamlit.app/
+https://sentinel---ai-guardian-gylii35nkmajbgmnnfplht.streamlit.app/
 
 ## Author
 Shravan Kumar Gogi

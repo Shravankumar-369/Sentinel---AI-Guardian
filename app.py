@@ -62,8 +62,8 @@ if selected == "Home":
     )
 
     # Hero Image
-    hero_image = Image.open("assets/logo.jpg")
-    st.image(hero_image, use_column_width=True)
+    hero_image = Image.open("assets/logo3.jpg")
+    st.image(hero_image, use_container_width=True)
 
 
 # ===============================
@@ -284,6 +284,6 @@ else:
         Built with Python, Streamlit, Google Gemini AI, Selenium, and web scraping.  
         Stay safe online by verifying news and checking suspicious URLs before clicking!
     """)
-    image = Image.open("assets/hero_image.jpg")
+    image = Image.open("assets/hero_image2.jpg")
 
     st.image(image, width=200)

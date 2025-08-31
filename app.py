@@ -223,7 +223,7 @@ Key Takeaway: Be vigilant, follow safe practices online, and report any illegal 
 
 """)
 
-st.header(Awareness regarding OTP usage")
+st.header("Awareness regarding OTP usage")
 st.markdown("""
 
 - ⚠ Never share your OTP with anyone – not even with us. We will never ask for your OTP over call, SMS, or email.

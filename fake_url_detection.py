@@ -1,81 +1,127 @@
-import streamlit as st
-import requests
-import socket
-import ssl
 import whois
-from bs4 import BeautifulSoup
+import streamlit as st
 import google.generativeai as genai
+import requests
+from bs4 import BeautifulSoup
+import ssl
+import socket
+import OpenSSL
 
-# ----------------------------
-# CONFIGURE GEMINI
-# ----------------------------
-genai.configure(api_key=st.secrets["API_KEY"])
-model = genai.GenerativeModel("gemini-pro")
+# 🔑 Secure API key from Streamlit secrets
+GEMINI_API_KEY = st.secrets["API_KEY"]
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel("gemini-1.5-flash")
 
-# ----------------------------
-# HELPER FUNCTIONS
-# ----------------------------
-def check_ssl_certificate(domain):
-    """Check if SSL certificate is valid for a domain"""
+
+# --- Lexical Features ---
+def lexical_features(url):
+    features = {}
+    features['has_ip'] = any(c.isdigit() for c in url.split("//")[-1].split("/")[0])
+    features['has_https'] = url.lower().startswith("https://")
+    return features
+
+
+# --- SSL Certificate Info ---
+def ssl_info(url):
     try:
+        hostname = url.split("//")[-1].split("/")[0]
         ctx = ssl.create_default_context()
-        with socket.create_connection((domain, 443), timeout=5) as sock:
-            with ctx.wrap_socket(sock, server_hostname=domain) as ssock:
-                cert = ssock.getpeercert()
-                return True, cert.get("subject", [])
+        with ctx.wrap_socket(socket.socket(), server_hostname=hostname) as s:
+            s.settimeout(5)
+            s.connect((hostname, 443))
+            cert = s.getpeercert(binary_form=True)
+            x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_ASN1, cert)
+            return {
+                "subject": dict(x509.get_subject().get_components()),
+                "issuer": dict(x509.get_issuer().get_components()),
+                "not_before": x509.get_notBefore().decode(),
+                "not_after": x509.get_notAfter().decode()
+            }
     except Exception as e:
-        return False, str(e)
+        return {"error": str(e)}
 
 
-def check_dns(domain):
-    """Check DNS resolution"""
+def get_page_details(url):
+    """
+    Fetch basic webpage info using requests + BeautifulSoup.
+    Detects title and whether login fields are present.
+    """
+    page_data = {"title": None, "has_login": False, "error": None}
+    headers = {"User-Agent": "Mozilla/5.0"}
+
     try:
-        ip = socket.gethostbyname(domain)
-        return True, ip
-    except socket.gaierror:
-        return False, None
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
 
+        soup = BeautifulSoup(response.text, "html.parser")
 
-def get_whois_info(domain):
-    """Fetch WHOIS information"""
-    try:
-        w = whois.whois(domain)
-        return True, w
+        # Extract title
+        if soup.title:
+            page_data["title"] = soup.title.string.strip()
+
+        # Look for login/password fields
+        html = response.text.lower()
+        if "password" in html or "login" in html:
+            page_data["has_login"] = True
+
     except Exception as e:
-        return False, str(e)
+        page_data["error"] = f"Could not load page: {str(e)}"
+
+    return page_data
 
 
-def get_page_content(url):
-    """Fetch and parse page HTML with BeautifulSoup"""
+def check_whois(url):
+    """
+    Perform WHOIS lookup for domain info
+    """
     try:
-        r = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
-        if r.status_code == 200:
-            soup = BeautifulSoup(r.text, "html.parser")
-            return True, soup.get_text()[:1000]  # limit to 1000 chars
-        return False, f"Status {r.status_code}"
+        domain_info = whois.whois(url)
+        return {
+            "registrar": domain_info.registrar,
+            "creation_date": str(domain_info.creation_date),
+            "expiration_date": str(domain_info.expiration_date),
+        }
     except Exception as e:
-        return False, str(e)
+        return {"error": f"WHOIS lookup failed: {str(e)}"}
 
 
-def phishing_detector(url, page_text, whois_info, ssl_info, dns_info):
-    """Ask Gemini to analyze if the URL is suspicious"""
+def gemini_verdict(url, page_data, whois_data, lexical_data, ssl_data):
+    """
+    Use Gemini AI to analyze phishing risk
+    """
     prompt = f"""
-    Analyze the following URL and metadata to decide if it's a legitimate or fake/malicious site.
+    Analyze this website for phishing risk:
 
     URL: {url}
+    Lexical Features: {lexical_data}
+    Page Title: {page_data.get('title')}
+    Login Field Present: {page_data.get('has_login')}
+    Page Error: {page_data.get('error')}
+    WHOIS Info: {whois_data}
+    SSL Info: {ssl_data}
 
-    Page Text (first 1000 chars): {page_text}
-
-    WHOIS Info: {whois_info}
-
-    SSL Info: {ssl_info}
-
-    DNS Info: {dns_info}
-
-    Respond with:
-    - RISK LEVEL: (Safe / Suspicious / High Risk)
-    - KEY REASONS: Bullet points
-    - FINAL VERDICT: Short explanation
+    Return verdict:
+    - Safe ✅
+    - Suspicious ⚠
+    - Phishing ❌
     """
-    response = model.generate_content(prompt)
-    return response.text
+
+    try:
+        response = model.generate_content(prompt)
+        return response.text.strip()
+    except Exception as e:
+        return f"AI analysis failed: {str(e)}"
+
+
+def phishing_detector(url):
+    """
+    Full pipeline: lexical features, page details, WHOIS info, SSL, AI verdict
+    Returns 3 values: page_data, whois_data, verdict
+    """
+    lexical_data = lexical_features(url)
+    page_data = get_page_details(url)
+    whois_data = check_whois(url)
+    ssl_data = ssl_info(url)
+    verdict = gemini_verdict(url, page_data, whois_data, lexical_data, ssl_data)
+
+    return page_data, whois_data, verdict

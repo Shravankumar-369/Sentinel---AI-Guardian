@@ -43,6 +43,7 @@ Verdict: Safe , suspicious , phishing
 
 
 Sentinel/
+
 ├── detectors/             
 │   ├── fake_url_detection.py        
 │   ├── fake_news_detection.py                         
@@ -50,18 +51,18 @@ Sentinel/
 ├── requirements.txt      
 └── README.md     
 ## Requirements
- streamlit
-streamlit-option-menu
-streamlit-lottie
-pillow
-requests
-beautifulsoup4
-googlesearch-python
-webdriver-manager
-google-generativeai
-beautifulsoup4
-requests
-google-generativeai
+ streamlit, 
+streamlit-option-menu, 
+streamlit-lottie, 
+pillow, 
+requests, 
+beautifulsoup4, 
+googlesearch-python, 
+webdriver-manager, 
+google-generativeai, 
+beautifulsoup4, 
+requests, 
+google-generativeai, 
 whois
 
 For Web Interface

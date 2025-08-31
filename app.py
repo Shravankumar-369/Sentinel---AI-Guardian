@@ -170,7 +170,7 @@ elif selected == "Phishing URL Detection":
 # ===============================
 elif selected == "Notice":
     st.header("Cyber awareness")
-    st.markdown(""""
+    st.markdown("""
     Cyber Awareness and Hygiene
 1. For Parents
 
@@ -221,17 +221,20 @@ Legal Compliance: Publishing, collecting, or distributing CP/CSAM is illegal und
 
 Key Takeaway: Be vigilant, follow safe practices online, and report any illegal or suspicious activity. Be Safe, Browse Safe!
 
-Awareness regarding OTP useage : 
+""")
 
-⚠ Never share your OTP with anyone – not even with us. We will never ask for your OTP over call, SMS, or email.
+st.header(Awareness regarding OTP usage")
+st.markdown("""
 
-🛡 Protect your account: OTPs are private keys. If someone asks for your OTP, it’s a scam. Report suspicious activity immediately.
+- ⚠ Never share your OTP with anyone – not even with us. We will never ask for your OTP over call, SMS, or email.
 
-🚨 Warning: Fraudsters may trick you into sharing OTPs. Remember: Genuine organizations never ask for OTPs outside the app. Stay alert, stay safe.
+- 🛡 Protect your account: OTPs are private keys. If someone asks for your OTP, it’s a scam. Report suspicious activity immediately.
 
-🔒 Your OTP = Your Digital Identity. Keep it safe. Together, let’s stop OTP fraud and protect our community.
+- 🚨 Warning: Fraudsters may trick you into sharing OTPs. Remember: Genuine organizations never ask for OTPs outside the app. Stay alert, stay safe.
 
-💡 Did you know? Most online frauds start with OTP sharing. Never share your OTP. If in doubt, report it instantly.
+- 🔒 Your OTP = Your Digital Identity. Keep it safe. Together, let’s stop OTP fraud and protect our community.
+
+- 💡 Did you know? Most online frauds start with OTP sharing. Never share your OTP. If in doubt, report it instantly.
 
 Reference:
 

@@ -8,3 +8,5 @@ webdriver-manager
 google-generativeai
 whois
 googlesearch-python
+lxml
+dnspython

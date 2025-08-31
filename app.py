@@ -62,7 +62,7 @@ if selected == "Home":
     )
 
     # Hero Image
-    hero_image = Image.open("assets/logo3.jpg")
+    hero_image = Image.open("assets/logo.jpg")
     st.image(hero_image, use_container_width=True)
 
 
@@ -169,96 +169,64 @@ elif selected == "Phishing URL Detection":
 # About Page
 # ===============================
 elif selected == "Notice":
-    st.header("Cyber awareness")
+    st.header("Cyber Awareness")
+
     st.markdown("""
-    Cyber Awareness and Hygiene
-1. For Parents
+### Cyber Awareness and Hygiene  
 
-Talk & Monitor: Discuss online threats (grooming, bullying, stalking) with children and monitor their online activity. Set clear internet and game usage guidelines.
+#### 1. For Parents
+- *Talk & Monitor*: Discuss online threats (grooming, bullying, stalking) with children and monitor their online activity. Set clear internet and game usage guidelines.  
+- *Watch Behavior Changes*: Defensive or secretive behavior may indicate cyber grooming. Engage children in offline activities.  
+- *Protect Against Grooming*: Explain responsible social media use and ensure strong privacy settings.  
+- *Avoid Suspicious Links*: Do not click unknown links or attachments to prevent malware infection.  
+- *Cover Webcams*: Protect against unauthorized observation by covering webcams when not in use.  
+- *Install Security Software*: Use antivirus and parental control software. Review social media privacy settings.  
+- *Update Software*: Regularly update OS and applications to patch vulnerabilities. Download apps from trusted sources only.  
+- *Secure Browsing*: Use updated browsers and safe browsing tools to prevent attacks.  
 
-Watch Behavior Changes: Defensive or secretive behavior may indicate cyber grooming. Engage children in offline activities.
+#### 2. For Teens and Young Adults
+- *Secure Online Presence*: Use proper privacy settings on social media; share content only with trusted contacts.  
+- *Friend Requests & Blocking*: Accept requests carefully, know how to block or remove uncomfortable contacts.  
+- *Logout & Passwords*: Always log out and secure devices with passwords.  
+- *Fake Accounts*: Report impersonation to social media providers immediately.  
+- *Video & Chat Safety*: Be cautious on video calls; private chats can be recorded. Avoid taking sensitive photos/videos on cloud-connected devices.  
+- *Cyber Stalking Protection*: Disable location services, avoid sharing personal info, and consult trusted people if targeted.  
+- *Sensitive Browsing*: Access banking or shopping sites only from personal, secure devices or networks.  
+- *Device Security*: Use passwords/PINs, install apps from trusted sources, erase private data before servicing or selling devices.  
 
-Protect Against Grooming: Explain responsible social media use and ensure strong privacy settings.
+#### 3. For Organizations
+- *HR Policies*: Implement clear rules for handling CP/CSAM or sexually explicit material.  
+- *Device Usage*: Define proper use of organizational devices.  
+- *Investigation & Reporting*: Investigate and act against employees found possessing obscene content. Report incidents to police and preserve evidence securely.  
+- *Legal Compliance*: Publishing, collecting, or distributing CP/CSAM is illegal under Sections 67, 67A, and 67B of the IT Act, 2000.  
 
-Avoid Suspicious Links: Do not click unknown links or attachments to prevent malware infection.
-
-Cover Webcams: Protect against unauthorized observation by covering webcams when not in use.
-
-Install Security Software: Use antivirus and parental control software. Review social media privacy settings.
-
-Update Software: Regularly update OS and applications to patch vulnerabilities. Download apps from trusted sources only.
-
-Secure Browsing: Use updated browsers and safe browsing tools to prevent attacks.
-
-2. For Teens and Young Adults
-
-Secure Online Presence: Use proper privacy settings on social media; share content only with trusted contacts.
-
-Friend Requests & Blocking: Accept requests carefully, know how to block or remove uncomfortable contacts.
-
-Logout & Passwords: Always log out and secure devices with passwords.
-
-Fake Accounts: Report impersonation to social media providers immediately.
-
-Video & Chat Safety: Be cautious on video calls; private chats can be recorded. Avoid taking sensitive photos/videos on cloud-connected devices.
-
-Cyber Stalking Protection: Disable location services, avoid sharing personal info, and consult trusted people if targeted.
-
-Sensitive Browsing: Access banking or shopping sites only from personal, secure devices or networks.
-
-Device Security: Use passwords/PINs, install apps from trusted sources, erase private data before servicing or selling devices.
-
-
-3. For Organizations
-
-HR Policies: Implement clear rules for handling CP/CSAM or sexually explicit material.
-
-Device Usage: Define proper use of organizational devices.
-
-Investigation & Reporting: Investigate and act against employees found possessing obscene content. Report incidents to police and preserve evidence securely.
-
-Legal Compliance: Publishing, collecting, or distributing CP/CSAM is illegal under Sections 67, 67A, and 67B of the IT Act, 2000.
-
-Key Takeaway: Be vigilant, follow safe practices online, and report any illegal or suspicious activity. Be Safe, Browse Safe!
-
-""")
-
-st.header("Awareness regarding OTP usage")
-st.markdown("""
-
-- ⚠ Never share your OTP with anyone – not even with us. We will never ask for your OTP over call, SMS, or email.
-
-- 🛡 Protect your account: OTPs are private keys. If someone asks for your OTP, it’s a scam. Report suspicious activity immediately.
-
-- 🚨 Warning: Fraudsters may trick you into sharing OTPs. Remember: Genuine organizations never ask for OTPs outside the app. Stay alert, stay safe.
-
-- 🔒 Your OTP = Your Digital Identity. Keep it safe. Together, let’s stop OTP fraud and protect our community.
-
-- 💡 Did you know? Most online frauds start with OTP sharing. Never share your OTP. If in doubt, report it instantly.
-
-Reference:
-
-[A Handbook for Students on Cyber Safety]
-
-Download the Cyber Dost – Awareness Document  
-    Published by:  
-    Ministry of Home Affairs,  
-    Government of India
-
-
-
-
+*Key Takeaway:* Be vigilant, follow safe practices online, and report any illegal or suspicious activity. *Be Safe, Browse Safe!*
     """)
 
+    st.header("Awareness regarding OTP usage")
+    st.markdown("""
+- ⚠ *Never share your OTP* with anyone – not even with us. We will never ask for your OTP over call, SMS, or email.  
+- 🛡 *Protect your account*: OTPs are private keys. If someone asks for your OTP, it’s a scam. Report suspicious activity immediately.  
+- 🚨 *Warning*: Fraudsters may trick you into sharing OTPs. Remember: Genuine organizations never ask for OTPs outside the app. Stay alert, stay safe.  
+- 🔒 *Your OTP = Your Digital Identity*. Keep it safe. Together, let’s stop OTP fraud and protect our community.  
+- 💡 *Did you know?* Most online frauds start with OTP sharing. Never share your OTP. If in doubt, report it instantly.  
+
+*Reference:*  
+[A Handbook for Students on Cyber Safety]  
+
+*Download the Cyber Dost – Awareness Document*  
+Published by:  
+Ministry of Home Affairs, Government of India  
+    """)
+
+    # PDF download button
     with open("Cyber-security-tips-by-cyber-dost.pdf", "rb") as pdf_file:
         st.download_button(
-        label="Click here to download",
-        data=pdf_file,
-        file_name="Cyber-security-tips-by-cyber-dost.pdf",
-        mime="application/pdf"
-    )
-
-    
+            label="📥 Click here to download",
+            data=pdf_file,
+            file_name="Cyber-security-tips-by-cyber-dost.pdf",
+            mime="application/pdf"
+        )
 
     
 
@@ -287,6 +255,6 @@ else:
         Built with Python, Streamlit, Google Gemini AI, Selenium, and web scraping.  
         Stay safe online by verifying news and checking suspicious URLs before clicking!
     """)
-    image = Image.open("assets/hero_image2.jpg")
+    image = Image.open("assets/hero_image.jpg")
 
     st.image(image, width=200)

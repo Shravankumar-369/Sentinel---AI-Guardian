@@ -57,7 +57,7 @@ def get_page_content(url):
         return False, str(e)
 
 
-def gemini_analysis(url, page_text, whois_info, ssl_info, dns_info):
+def phishing_detector(url, page_text, whois_info, ssl_info, dns_info):
     """Ask Gemini to analyze if the URL is suspicious"""
     prompt = f"""
     Analyze the following URL and metadata to decide if it's a legitimate or fake/malicious site.

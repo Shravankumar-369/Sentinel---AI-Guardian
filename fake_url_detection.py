@@ -1,79 +1,81 @@
-# fake_url_detection.py
-
-import whois
 import streamlit as st
-from playwright.sync_api import sync_playwright
+import requests
+import socket
+import ssl
+import whois
+from bs4 import BeautifulSoup
 import google.generativeai as genai
 
-# ---------------- CONFIG ----------------
-# Make sure you store your GEMINI API key in Streamlit Secrets
-# st.secrets["API_KEY"]
+# ----------------------------
+# CONFIGURE GEMINI
+# ----------------------------
 genai.configure(api_key=st.secrets["API_KEY"])
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-pro")
 
-# ---------------- WHOIS CHECK ----------------
-def check_whois(url: str) -> dict:
+# ----------------------------
+# HELPER FUNCTIONS
+# ----------------------------
+def check_ssl_certificate(domain):
+    """Check if SSL certificate is valid for a domain"""
     try:
-        domain_info = whois.whois(url)
-        return {
-            "registrar": domain_info.registrar,
-            "creation_date": str(domain_info.creation_date),
-            "expiration_date": str(domain_info.expiration_date),
-        }
+        ctx = ssl.create_default_context()
+        with socket.create_connection((domain, 443), timeout=5) as sock:
+            with ctx.wrap_socket(sock, server_hostname=domain) as ssock:
+                cert = ssock.getpeercert()
+                return True, cert.get("subject", [])
     except Exception as e:
-        return {"error": f"WHOIS lookup failed: {str(e)}"}
+        return False, str(e)
 
-# ---------------- PLAYWRIGHT PAGE ANALYSIS ----------------
-def analyze_page_playwright(url: str) -> dict:
-    """
-    Headlessly opens the page using Playwright.
-    Checks for login/password fields.
-    """
-    data = {"title": None, "has_login": False, "error": None}
+
+def check_dns(domain):
+    """Check DNS resolution"""
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
-            page.goto(url, timeout=10000)
-            data["title"] = page.title()
-            html = page.content().lower()
-            if "password" in html or "login" in html:
-                data["has_login"] = True
-            browser.close()
-    except Exception as e:
-        data["error"] = str(e)
-    return data
+        ip = socket.gethostbyname(domain)
+        return True, ip
+    except socket.gaierror:
+        return False, None
 
-# ---------------- GEMINI AI VERDICT ----------------
-def gemini_verdict(url: str, whois_data: dict, page_data: dict) -> str:
-    """
-    Uses Gemini AI to give final verdict + suggestions
-    """
+
+def get_whois_info(domain):
+    """Fetch WHOIS information"""
+    try:
+        w = whois.whois(domain)
+        return True, w
+    except Exception as e:
+        return False, str(e)
+
+
+def get_page_content(url):
+    """Fetch and parse page HTML with BeautifulSoup"""
+    try:
+        r = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+        if r.status_code == 200:
+            soup = BeautifulSoup(r.text, "html.parser")
+            return True, soup.get_text()[:1000]  # limit to 1000 chars
+        return False, f"Status {r.status_code}"
+    except Exception as e:
+        return False, str(e)
+
+
+def gemini_analysis(url, page_text, whois_info, ssl_info, dns_info):
+    """Ask Gemini to analyze if the URL is suspicious"""
     prompt = f"""
-You are an AI cybersecurity assistant.
+    Analyze the following URL and metadata to decide if it's a legitimate or fake/malicious site.
 
-Analyze the following URL and determine if it is safe, suspicious, or phishing.
+    URL: {url}
 
-URL: {url}
-WHOIS Info: {whois_data}
-Page Analysis: {page_data}
+    Page Text (first 1000 chars): {page_text}
 
-Return only:
-- Final Verdict: Safe ✅ / Suspicious ⚠️ / Phishing ❌
-- Short suggestion for the user (1-2 sentences)
-"""
-    try:
-        response = model.generate_content(prompt)
-        return response.text.strip()
-    except Exception as e:
-        return f"AI analysis failed: {str(e)}"
+    WHOIS Info: {whois_info}
 
-# ---------------- MAIN DETECTOR ----------------
-def phishing_detector(url: str) -> str:
+    SSL Info: {ssl_info}
+
+    DNS Info: {dns_info}
+
+    Respond with:
+    - RISK LEVEL: (Safe / Suspicious / High Risk)
+    - KEY REASONS: Bullet points
+    - FINAL VERDICT: Short explanation
     """
-    Returns Gemini verdict only
-    """
-    whois_data = check_whois(url)
-    page_data = analyze_page_playwright(url)
-    verdict = gemini_verdict(url, whois_data, page_data)
-    return verdict
+    response = model.generate_content(prompt)
+    return response.text
